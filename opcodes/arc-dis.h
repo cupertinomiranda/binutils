@@ -75,9 +75,9 @@ struct arcDisState
 
   int opWidth;
   int targets[4];
-  /* START ARC LOCAL */
+  /* START ARC LOCAL.  */
   unsigned int addresses[4];
-  /* END ARC LOCAL */
+  /* END ARC LOCAL.  */
   /* Set as a side-effect of calling the disassembler.
      Used only by the debugger.  */
   enum Flow flow;
@@ -89,7 +89,7 @@ struct arcDisState
   char instrBuffer[40];
   char operandBuffer[allOperandsSize];
   char _ea_present;
-  char _addrWriteBack; /* Address writeback */
+  char _addrWriteBack; /* Address writeback.  */
   char _mem_load;
   char _load_len;
   enum NullifyMode nullifyMode;
