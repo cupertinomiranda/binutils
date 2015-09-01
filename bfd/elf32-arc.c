@@ -27,7 +27,6 @@
 #include "libiberty.h"
 #include "opcode/arc-func.h"
 
-#define printf(...)
 #define ARC_DEBUG(...)
 #define DEBUG(...) printf (__ARGV__)
 #define DEBUG_ARC_RELOC(A)
@@ -343,7 +342,7 @@ arc_elf_object_p (bfd * abfd)
   else
     {
       /* This is an old ARC, throw a warning. Probably the best is to
-       * return FALSE */
+       * return FALSE.  */
       (*_bfd_error_handler)
 	  (_("Warning: unset or old architecture flags. \n"
 	     "	       Use default machine.\n"));
@@ -374,8 +373,8 @@ arc_elf_final_write_processing (bfd * abfd, bfd_boolean linker ATTRIBUTE_UNUSED)
 	break;
       case bfd_mach_arc_arcv2:
 	val = EF_ARC_CPU_ARCV2HS;
-	// TODO: Check validity of this. It can also be ARCV2EM here.
-	// Previous version sets the e_machine here.
+	/* TODO: Check validity of this. It can also be ARCV2EM here.
+	 * Previous version sets the e_machine here.  */
 	break;
 
   }
@@ -473,29 +472,12 @@ debug_arc_reloc (struct arc_relocation_data reloc_data)
 
 #define none (0)
 
-
 #define ARC_RELOC_HOWTO(TYPE, VALUE, SIZE, BITSIZE, RELOC_FUNCTION, OVERFLOW, FORMULA) \
   case R_##TYPE: \
     { \
       bfd_vma bitsize ATTRIBUTE_UNUSED = BITSIZE; \
-      printf ("S = 0x%x\n", S); \
-      printf ("A = 0x%x\n", A); \
-      printf ("P1 = 0x%x\n", ((reloc_data.input_section->output_section->vma + reloc_data.input_section->output_offset) + reloc_data.reloc_offset)); \
-      /* printf ("PCL = 0x%x\n", ((reloc_data.input_section->output_section->vma + reloc_data.input_section->output_offset) + reloc_data.reloc_offset) & ~0x3); */ \
-      printf ("PCL = 0x%x\n", P); \
-      printf ("LOC = 0x%x\n", (reloc_data.sym_section->output_section->vma + reloc_data.sym_section->output_offset)); \
-      printf ("P = 0x%x\n", P); \
-      printf ("G = 0x%x\n", G); \
-      printf ("SDA_OFFSET = 0x%x\n", _SDA_BASE_); \
-      printf ("SDA_SET = %d\n", reloc_data.sdata_begin_symbol_vma_set); \
-      printf ("GOT_OFFSET = 0x%x\n", GOT); \
       relocation = FORMULA  ; \
-      printf ("FORMULA = " #FORMULA "\n"); \
-      printf ("relocation = 0x%08x\n", relocation); \
-      printf ("before = 0x%08x\n", (unsigned int) insn); \
-      printf ("data   = 0x%08x (%u) (%d)\n", (unsigned int) relocation, (unsigned int) relocation, (int) relocation); \
       insn = RELOC_FUNCTION (insn, relocation); \
-      printf ("after  = 0x%08x\n", (unsigned int) insn); \
     } \
     break;
 
@@ -512,11 +494,15 @@ arc_do_relocation (bfd_byte * contents, struct arc_relocation_data reloc_data)
   switch (reloc_data.howto->size)
     {
       case 2:
-	insn = arc_bfd_get_32 (reloc_data.input_section->owner, contents + reloc_data.reloc_offset, reloc_data.input_section);
+	insn = arc_bfd_get_32 (reloc_data.input_section->owner, 
+			       contents + reloc_data.reloc_offset, 
+			       reloc_data.input_section);
 	break;
       case 1:
       case 0:
-	insn = arc_bfd_get_16 (reloc_data.input_section->owner, contents + reloc_data.reloc_offset, reloc_data.input_section);
+	insn = arc_bfd_get_16 (reloc_data.input_section->owner, 
+			       contents + reloc_data.reloc_offset, 
+			       reloc_data.input_section);
 	break;
       default:
 	insn = 0;
@@ -545,11 +531,12 @@ arc_do_relocation (bfd_byte * contents, struct arc_relocation_data reloc_data)
 				 bfd_arch_bits_per_address (reloc_data.input_section->owner),
 				 relocation);
 
+#undef DEBUG_ARC_RELOC
+#define DEBUG_ARC_RELOC(A) debug_arc_reloc (A)
       if (flag != bfd_reloc_ok)
 	{
 	  fprintf (stderr, "Relocation overflows !!!!\n");
-#undef DEBUG_ARC_RELOC
-#define DEBUG_ARC_RELOC(A) debug_arc_reloc (A)
+
 	  DEBUG_ARC_RELOC (reloc_data);
 
 	  fprintf (stderr,
@@ -695,13 +682,6 @@ elf_arc_relocate_section (bfd * output_bfd,
 	     h2->root.u.def.section->output_section->vma);
 	  reloc_data.sdata_begin_symbol_vma_set = TRUE;
 	}
-	//else
-	//{
-      //	(*_bfd_error_handler)
-      //	    ("Error: Linker symbol __SDATA_BEGIN__ not found");
-      //	bfd_set_error (bfd_error_bad_value);
-      //	return FALSE;
-      //}
 
       h2 = elf_link_hash_lookup (elf_hash_table (info),
 				 "_GLOBAL_OFFSET_TABLE_", FALSE, FALSE,
@@ -711,11 +691,6 @@ elf_arc_relocate_section (bfd * output_bfd,
 	  reloc_data.got_symbol_vma =
 	      (h2->root.u.def.value +
 	       h2->root.u.def.section->output_section->vma);
-	  printf ("GOT = 0x%08x\n", reloc_data.got_symbol_vma);
-	  // (*_bfd_error_handler)("Error: Linker symbol
-	  // _GLOBAL_OFFSET_TABLE_ not found");
-	  // bfd_set_error (bfd_error_bad_value);
-	  // return FALSE;
 	}
 
       r_type = ELF32_R_TYPE (rel->r_info);
@@ -739,10 +714,8 @@ elf_arc_relocate_section (bfd * output_bfd,
       sym = NULL;
       sec = NULL;
 
-      if (r_symndx < symtab_hdr->sh_info)	// A local symbol
+      if (r_symndx < symtab_hdr->sh_info) /* A local symbol.  */
 	{
-	  printf (" Local: \n");
-
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
 
@@ -757,11 +730,8 @@ elf_arc_relocate_section (bfd * output_bfd,
 
 	  reloc_data.should_relocate = TRUE;
 	}
-      else
+      else /* Global symbol.   */
 	{
-	  printf (" Global: \n");
-	  /* Global symbols */
-
 	  /* get the symbol's entry in the symtab */
 	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
 
@@ -781,11 +751,11 @@ elf_arc_relocate_section (bfd * output_bfd,
 
 	      if (is_reloc_for_GOT (howto))
 		{
-		  //fprintf (stderr, "BLA 0x%08x\n", reloc_data.sym_value);
 		  struct dynamic_sections ds =
 		  arc_create_dynamic_sections (output_bfd, info);
 
-		  // TODO: Change it to use arc_do_relocation with ARC_32 reloc
+		  /* TODO: Change it to use arc_do_relocation with ARC_32
+		   * reloc.  */
 		  bfd_vma relocation =
 		    reloc_data.sym_value + reloc_data.reloc_addend
 		    + reloc_data.sym_section->output_offset
@@ -838,18 +808,6 @@ elf_arc_relocate_section (bfd * output_bfd,
 	  reloc_data.got_offset_value = h->got.offset;
 
 	}
-	/*
-       printf (" Relocation = %d (%x)\n", relocation, relocation);
-
-       if (is_reloc_for_GOT (howto) == TRUE)
-       {
-	if (dynobj == NULL)
-	  elf_hash_table (info)->dynobj = dynobj = output_bfd;
-
-	_bfd_elf_create_got_section (dynobj, info);
-	continue;
-       }
-	*/
 
       if (is_reloc_SDA_relative (howto) && reloc_data.sdata_begin_symbol_vma_set == FALSE)
 	{
@@ -983,8 +941,6 @@ elf_arc_check_relocs (bfd * abfd,
 
       if (is_reloc_for_GOT (howto) == TRUE)
 	{
-	  printf ("In check_relocs: It is a GOT reloc\n");
-
 	  if (h == NULL)
 	    {
 	      /* Local symbol */
@@ -1002,16 +958,6 @@ elf_arc_check_relocs (bfd * abfd,
     }
 
   return TRUE;
-}
-
-static ATTRIBUTE_UNUSED void
-dgotoump_section_contents (asection * sec)
-{
-  unsigned int i;
-  printf ("NAME = %s, SIZE = %d, DATA = ", sec->name, sec->size);
-  for (i = 0; i < sec->size; i++)
-    printf ("%02x ", sec->contents[i]);
-  printf ("\n");
 }
 
 #define ELF_DYNAMIC_INTERPRETER  "/sbin/ld-uClibc.so"
@@ -1259,12 +1205,6 @@ plt_do_relocs_for_symbol (struct dynamic_sections *ds,
 	  ? ds->splt->output_section->vma + ds->splt->output_offset +
 	  plt_offset + reloc->offset : 0;
 
-      printf ("PLT VMA = 0x%08x\n",
-	     ds->splt->output_section->vma + ds->splt->output_offset);
-      printf ("GOT VMA = 0x%08x\n",
-	     ds->sgotplt->output_section->vma +
-	     ds->sgotplt->output_offset);
-
       if (IS_MIDDLE_ENDIAN (reloc->symbol))
 	{
 	  relocation =
@@ -1375,12 +1315,10 @@ elf_arc_adjust_dynamic_symbol (struct bfd_link_info *info,
   Elf_Internal_Rela rel; \
   /* Do Relocation */ \
   bfd_put_32 (output_bfd, (bfd_vma) 0, ds.s##SECTION->contents + OFFSET); \
-  /* bfd_put_32 (output_bfd, (bfd_vma) 0xFFFFFFFF, ds.s##SECTION->contents + OFFSET); *//*TODO To remove*/ \
   rel.r_addend = ADDEND; \
   rel.r_offset = (ds.s##SECTION)->output_section->vma + (ds.s##SECTION)->output_offset + OFFSET; \
   rel.r_info = ELF32_R_INFO (SYM_IDX, TYPE); \
-  bfd_elf32_swap_reloca_out (BFD, &rel, (bfd_byte *) loc); /* TODO: Validate the cast */ \
-  printf ("Add dynamic reloc in %s, offset= 0x%08x, type=%s, addend= 0x%08x\n", (ds.s##SECTION)->name, OFFSET, reloc_type_to_name (TYPE), ADDEND); \
+  bfd_elf32_swap_reloca_out (BFD, &rel, (bfd_byte *) loc); \
 }
 
 /* Function :  elf_arc_finish_dynamic_symbol
@@ -1629,8 +1567,6 @@ elf_arc_size_dynamic_sections (bfd * output_bfd, struct bfd_link_info *info)
 
   for (s = dynobj->sections; s != NULL; s = s->next)
     {
-	printf ("Size for %s is %d\n", s->name, s->size);
-
 	bfd_boolean	is_dynamic_section = FALSE;
 
 	/* Skip any non dynamic section */
@@ -1643,23 +1579,15 @@ elf_arc_size_dynamic_sections (bfd * output_bfd, struct bfd_link_info *info)
       if (!is_dynamic_section)
 	continue;
 
-
-      printf ("HERE in %s\n", s->name);
       s->contents = (bfd_byte *) bfd_alloc (dynobj, s->size);
       if (s->contents == NULL && s->size != 0)
-	{
-	  printf ("RETURNING FALSE\n");
 	  return FALSE;
-	}
 
       if (s->size == 0)
 	{
-	  printf ("Excluding %s\n", s->name);
 	  s->flags |= SEC_EXCLUDE;
 	  continue;
 	}
-
-      printf ("Exited\n");
 
       if (strcmp (s->name, ".rela.plt") != 0)
 	{
@@ -1742,7 +1670,5 @@ elf_arc_size_dynamic_sections (bfd * output_bfd, struct bfd_link_info *info)
 #define elf_backend_may_use_rel_p	0
 #define elf_backend_may_use_rela_p	1
 #define elf_backend_default_use_rela_p	1
-
-#undef printf
 
 #include "elf32-target.h"
