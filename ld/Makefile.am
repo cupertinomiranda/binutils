@@ -157,7 +157,7 @@ ALL_EMULATION_SOURCES = \
 	ealpha.c \
 	ealphavms.c \
 	earcv2elf.c \
-	earcv2elfb.c \
+	earcv2elfx.c \
 	earcelf.c \
 	earcelf_prof.c \
 	earclinux.c \
@@ -700,7 +700,7 @@ ealphavms.c: $(srcdir)/emulparams/alphavms.sh \
 earcv2elf.c: $(srcdir)/emulparams/arcv2elf.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elfarcv2.sc ${GEN_DEPENDS}
 
-earcv2elfb.c: $(srcdir)/emulparams/arcv2elfb.sh \
+earcv2elfx.c: $(srcdir)/emulparams/arcv2elfx.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elfarcv2.sc ${GEN_DEPENDS}
 
 earcelf.c: $(srcdir)/emulparams/arcelf.sh \
